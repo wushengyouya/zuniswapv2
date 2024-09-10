@@ -25,6 +25,7 @@ library ZuniswapV2Library {
             : (reserve1, reserve0);
     }
 
+    //进行代币兑换,输入In token代币,得到out token代币
     function queto(
         uint256 amountIn,
         uint256 reserveIn,
@@ -35,6 +36,7 @@ library ZuniswapV2Library {
         return (amountIn * reserveOut) / reserveIn;
     }
 
+    //对token地址进行排序
     function sortTokens(
         address tokenA,
         address tokenB
@@ -42,11 +44,13 @@ library ZuniswapV2Library {
         return tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
     }
 
+    //传入factoryAddress,tokenA,tokenB,计算出币对的合约地址
     function pairFor(
         address factoryAddress,
         address tokenA,
         address tokenB
     ) internal pure returns (address pairAddress) {
+        //对token地址进行从小到大排序
         (address token0, address token1) = sortTokens(tokenA, tokenB);
         pairAddress = address(
             uint160(

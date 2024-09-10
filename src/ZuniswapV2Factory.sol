@@ -60,7 +60,7 @@ contract ZuniswapV2Factory {
         ////直接使用new Contract{salt:salt}()
         // bytes32 salt = keccak256(abi.encodePacked(token0, token1));
         // pair = address(new ZuniswapV2Pair{salt: salt}());
-
+        //初始化Pair
         IZuniswapV2Pair(pair).initialize(token0, token1);
         pairs[token0][token1] = pair;
         pairs[token1][token0] = pair;

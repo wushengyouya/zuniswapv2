@@ -18,6 +18,19 @@ contract ZuniswapV2Router {
     }
 
     //添加流动性,不收取手续费
+    /**
+     *
+     * @param tokenA tokenA 地址
+     * @param tokenB tokenB 地址
+     * @param amountADesired tokenA添加的数量
+     * @param amountBDesired tokenB添加的数量
+     * @param amountAMin tokenA最小添加的数量
+     * @param amountBMin tokenB最小添加的数量
+     * @param to 流动性代币转入地址
+     * @return amountA
+     * @return amountB
+     * @return liquidity
+     */
     function addLiquidity(
         address tokenA,
         address tokenB,
@@ -195,6 +208,13 @@ contract ZuniswapV2Router {
         }
     }
 
+    /**
+     * @notice 安全转账函数，调用token的transferFrom
+     * @param token 币对地址
+     * @param from 转出地址
+     * @param to 转入地址
+     * @param value 金额
+     */
     function _safeTransferFrom(
         address token,
         address from,
