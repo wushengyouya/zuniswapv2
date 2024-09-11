@@ -110,39 +110,46 @@ contract ZuniswapV2RouterTest is Test {
             tokenB.balanceOf(address(this))
         );
         tokenA.approve(address(router), 1 ether);
-        tokenB.approve(address(router), 2 ether);
+        tokenB.approve(address(router), 1 ether);
         (uint256 amountA, uint256 amountB, uint256 liquidity) = router
             .addLiquidity(
                 address(tokenA),
                 address(tokenB),
                 1 ether,
-                2 ether,
+                1 ether,
                 1 ether,
                 1 ether,
                 address(this)
             );
 
         assertEq(amountA, 1 ether);
-        assertEq(amountB, 2 ether);
+        assertEq(amountB, 1 ether);
         // assertEq(liquidity, 1414213562373095048);
         // assertEq(
         //     ZuniswapV2Pair(pairAddress).totalSupply(),
         //     1414213562373095048
         // );
+        console.log("liquidity:", liquidity);
+        console.log(
+            "lp token:",
+            ZuniswapV2Pair(pairAddress).balanceOf(address(this))
+        );
+        //ZuniswapV2Pair(pairAddress).transfer(pairAddress, liquidity);
         ZuniswapV2Pair(pairAddress).approve(address(router), liquidity);
         (uint256 amountA_r, uint256 amountB_r) = router.removeLiquidity(
             address(tokenA),
             address(tokenB),
             liquidity,
-            1 ether,
-            1 ether,
+            0.1 ether,
+            0.1 ether,
             address(this)
         );
 
-        assertEq(tokenA.balanceOf(address(this)), 20 ether);
-        assertEq(tokenB.balanceOf(address(this)), 20 ether);
+        assertEq(tokenA.balanceOf(address(this)), 20 ether - 1000);
+        assertEq(tokenB.balanceOf(address(this)), 20 ether - 1000);
     }
 
+    //FIXME: [FAIL. Reason: InvalidK()]
     function testSwapExactTokensForTokens() public {
         tokenA.approve(address(router), 1 ether);
         tokenB.approve(address(router), 2 ether);

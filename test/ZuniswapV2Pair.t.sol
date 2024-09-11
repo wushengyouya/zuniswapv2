@@ -46,6 +46,7 @@ contract ZuniswapV2PairTest is Test {
         token0.transfer(address(pair), 1 ether);
         token1.transfer(address(pair), 1 ether);
 
+        //首次Mint会burn 1000 流动性代币
         pair.mint(address(this));
 
         assertEq(pair.balanceOf(address(this)), 1 ether - 1000);
@@ -105,13 +106,14 @@ contract ZuniswapV2PairTest is Test {
         pair.mint(address(this));
     }
 
-    //测试销毁
+    //FIXME:测试销毁
     function testBurn() public {
         token0.transfer(address(pair), 1 ether);
         token1.transfer(address(pair), 1 ether);
         pair.mint(address(this));
         assertEq(pair.balanceOf(address(this)), 1 ether - 1000);
         assertReserves(1 ether, 1 ether);
+        pair.transfer(address(pair), pair.balanceOf(address(this)));
         pair.burn(address(this));
         assertEq(token0.balanceOf(address(this)), 10 ether - 1000);
         assertEq(token1.balanceOf(address(this)), 10 ether - 1000);
@@ -121,12 +123,14 @@ contract ZuniswapV2PairTest is Test {
     // function testBurnUnbalanceDifferrentUsers()public{
 
     // }
+
+    //FIXME:
     function testBurnZeroLiquidity() public {
         token0.transfer(address(pair), 1 ether);
         token1.transfer(address(pair), 1 ether);
         pair.mint(address(this));
 
-        bytes memory prankData = abi.encodeWithSignature("burn()");
+        // bytes memory prankData = abi.encodeWithSignature("burn()");
 
         vm.prank(address(1));
         vm.expectRevert();
@@ -148,6 +152,7 @@ contract ZuniswapV2PairTest is Test {
         token0.transfer(address(pair), 2 ether);
         token1.transfer(address(pair), 1 ether);
         pair.mint(address(this)); //1 LP
+        pair.transfer(address(pair), pair.balanceOf(address(this)));
         pair.burn(address(this));
         assertEq(pair.balanceOf(address(this)), 0);
         assertReserves(1500, 1000);
@@ -167,11 +172,12 @@ contract ZuniswapV2PairTest is Test {
         pair.swap(0, 0, address(this), "");
     }
 
+    //转入token0,取出token0
     function testSwapOut() public {
         token0.transfer(address(pair), 1 ether);
         token1.transfer(address(pair), 1 ether);
-        pair.mint(address(this));
-
+        pair.mint(address(this)); //1 LPT - 1000
+        console.log("current LP Token:", pair.balanceOf(address(this)));
         vm.startPrank(address(testUser));
         token0.transfer(address(pair), 0.3 ether);
         pair.swap(0.2 ether, 0, address(testUser), "");
@@ -510,9 +516,9 @@ contract Flashloaner {
     }
 
     function zuniswapV2Call(
-        address sender,
-        uint256 amount0Out,
-        uint256 amount1Out,
+        address /*sender*/,
+        uint256 /*amount0Out*/,
+        uint256 /*amount1Out*/,
         bytes calldata data
     ) public {
         address tokenAddress = abi.decode(data, (address));
