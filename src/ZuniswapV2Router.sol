@@ -149,6 +149,7 @@ contract ZuniswapV2Router {
         );
         if (amounts[amounts.length - 1] < amountOutMin)
             revert InsufficientOutputAmount();
+
         _safeTransferFrom(
             path[0],
             msg.sender,
@@ -182,7 +183,12 @@ contract ZuniswapV2Router {
         _swap(amounts, path, to);
     }
 
-    //TODO:
+    /**
+     * 执行代币转换
+     * @param amounts swap的金额
+     * @param path 转换路径
+     * @param to_ swap完成后，金额转出的地址
+     */
     function _swap(
         uint256[] memory amounts,
         address[] memory path,

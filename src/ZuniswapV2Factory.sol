@@ -22,7 +22,7 @@ contract ZuniswapV2Factory {
     //所有币对合约地址
     address[] public allPairs;
 
-    //创建币对合约,传入两个token地址
+    //创建币对合约,传入两个token地址，并对token按照大小排序
     function createPair(
         address tokenA,
         address tokenB
@@ -30,6 +30,7 @@ contract ZuniswapV2Factory {
         if (tokenA == tokenB) {
             revert IdenticalAddress();
         }
+
         (address token0, address token1) = tokenA < tokenB
             ? (tokenA, tokenB)
             : (tokenB, tokenA);

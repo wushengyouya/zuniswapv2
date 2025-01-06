@@ -8,6 +8,7 @@ import "../src/ZuniswapV2Router.sol";
 import "./mock/ERC20Mintable.sol";
 
 contract ZuniswapV2RouterTest is Test {
+    address mio = makeAddr("user");
     ZuniswapV2Factory factory;
     ZuniswapV2Router router;
 
@@ -26,6 +27,7 @@ contract ZuniswapV2RouterTest is Test {
         tokenA.mint(address(this), 20 ether);
         tokenB.mint(address(this), 20 ether);
         tokenC.mint(address(this), 20 ether);
+        tokenA.mint(mio, 20 ether);
     }
 
     function encodeError(
@@ -149,7 +151,6 @@ contract ZuniswapV2RouterTest is Test {
         assertEq(tokenB.balanceOf(address(this)), 20 ether - 1000);
     }
 
-    //FIXME: [FAIL. Reason: InvalidK()]
     function testSwapExactTokensForTokens() public {
         tokenA.approve(address(router), 1 ether);
         tokenB.approve(address(router), 2 ether);
@@ -179,25 +180,19 @@ contract ZuniswapV2RouterTest is Test {
         path[0] = address(tokenA);
         path[1] = address(tokenB);
         path[2] = address(tokenC);
-
+        vm.startPrank(mio);
         tokenA.approve(address(router), 0.3 ether);
         router.swapExactTokensForTokens(
             0.3 ether,
             0.1 ether,
             path,
-            address(this)
+            address(mio)
         );
+        vm.stopPrank();
 
         // Swap 0.3 TKNA for ~0.186 TKNB
-        assertEq(
-            tokenA.balanceOf(address(this)),
-            20 ether - 1 ether - 0.3 ether
-        );
-        assertEq(tokenB.balanceOf(address(this)), 20 ether - 2 ether);
-        assertEq(
-            tokenC.balanceOf(address(this)),
-            20 ether - 1 ether + 0.186691414219734305 ether
-        );
+        assertEq(tokenA.balanceOf(mio), 20 ether - 0.3 ether);
+        assertEq(tokenC.balanceOf(mio), 0.186691414219734305 ether);
     }
 
     function testSwapTokensForExactTokens() public {

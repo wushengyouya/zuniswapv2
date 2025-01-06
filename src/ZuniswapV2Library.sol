@@ -25,7 +25,7 @@ library ZuniswapV2Library {
             : (reserve1, reserve0);
     }
 
-    //进行代币兑换,输入In token代币,得到out token代币
+    // 通过计算，保证按照原比例添加流动性，使价格不发生变化
     function queto(
         uint256 amountIn,
         uint256 reserveIn,
@@ -68,7 +68,16 @@ library ZuniswapV2Library {
         );
     }
 
-    //确定输入In token，得出Out Token数,扣除0.3%手续费
+    /**
+     * x * y = k = L ** 2
+     * p = y / x
+     * 假设确定 In 为 x, Out 为 y
+     * swap 公式：△y = △x * y / x + △x
+     * 确定输入In token，得出Out Token数,扣除0.3%手续费
+     * @param amountIn   要转换的金额
+     * @param reserveIn  In存储的总金额
+     * @param reserveOut Out存储的总金额
+     */
     function getAmountOut(
         uint256 amountIn,
         uint256 reserveIn,
@@ -84,7 +93,13 @@ library ZuniswapV2Library {
         return numerator / denominator;
     }
 
-    //确定out Token,得出in Token,扣除0.3%手续费
+    /**
+     * 确定out Token,得出in Token,扣除0.3%手续费
+     * swap公式：△x = x * △y / y - △y
+     * @param amountOut 确定Out的金额数
+     * @param reserveIn In总金额数
+     * @param reserveOut Out的总金额
+     */
     function getAmountIn(
         uint256 amountOut,
         uint reserveIn,
@@ -115,12 +130,13 @@ library ZuniswapV2Library {
                 path[i],
                 path[i + 1]
             );
-            amounts[i + 1] = getAmountOut(amounts[0], reserve0, reserve1);
+            amounts[i + 1] = getAmountOut(amounts[i], reserve0, reserve1);
         }
         return amounts;
     }
 
     //A-B-C 三个token
+    // C -> B -> A
     //C_outToken => A_inToken
     function getAmountsIn(
         address factory,
