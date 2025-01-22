@@ -10,6 +10,7 @@ contract ZuniswapV2Router {
     error SafeTransferFailed();
     error InsufficientOutputAmount();
     error ExcessiveInputAmount();
+
     IZuniswapV2Factory factory;
 
     //初始化工厂地址
@@ -201,6 +202,8 @@ contract ZuniswapV2Router {
             (uint256 amount0Out, uint256 amount1Out) = input == token0
                 ? (uint256(0), amountOut)
                 : (amountOut, uint256(0));
+            // i < path.length - 2,中间交换，指pool池互相交换
+            // A-B-C-D
             address to = i < path.length - 2
                 ? ZuniswapV2Library.pairFor(
                     address(factory),

@@ -38,6 +38,7 @@ contract ZuniswapV2Pair is ERC20, Math {
     uint112 private reserve0;
     uint112 private reserve1;
 
+    // 存储的最后的时间戳
     uint32 private blockTimestampLast;
 
     // twrp时间平均价格，累积的价格
@@ -67,6 +68,7 @@ contract ZuniswapV2Pair is ERC20, Math {
     constructor() ERC20("ZuniswapV2 Pair", "ZUNIV2", 18) {}
 
     // mint LR-Token,添加流动性
+    // (y + △y)(x + △x) = xy, L会发生变化
     function mint(address _to) public returns (uint256 liquidity) {
         // 获取上次存储的货币余额
         (uint112 _reserve0, uint112 _reserve1, ) = getReserves();
@@ -79,7 +81,7 @@ contract ZuniswapV2Pair is ERC20, Math {
         uint256 amount0 = balance0 - _reserve0;
         uint256 amount1 = balance1 - _reserve1;
 
-        // 计算流动性代币，当为初始状态时,为投入代币对的开平方-MINIMUM_LIQUIDITY
+        // 计算流动性代币，当为初始状态时,为投入代币对的开平方 -MINIMUM_LIQUIDITY
         // 如果已存在流动性池,按比例计算选择小的token,（流动性代币与token代币成正比关系）
         //totalSupply * amount/reserve
         if (totalSupply == 0) {
@@ -115,6 +117,7 @@ contract ZuniswapV2Pair is ERC20, Math {
     }
 
     // burn LR-Token,撤回流动性
+    // (y - △y)(x - △x) = xy, L会发生变化
     function burn(
         address to
     ) public returns (uint256 amount0, uint256 amount1) {
@@ -126,21 +129,22 @@ contract ZuniswapV2Pair is ERC20, Math {
         uint256 balance1 = IERC20(token1).balanceOf(address(this));
 
         // 获取用户,转入合约要销毁的LP流动性代币
-        uint256 liquidity = balanceOf[address(this)];
+        uint256 liquidityToken = balanceOf[address(this)];
 
         // 按照持有的流动性代币计算应得的代币份额
         // ((2 ether - 1000) * 3 ether))/2
-        amount0 = (liquidity * balance0) / totalSupply;
-        emit BurnValue(liquidity, balance0, totalSupply);
-        amount1 = (liquidity * balance1) / totalSupply;
-        emit BurnValue(liquidity, balance1, totalSupply);
+        amount0 = (liquidityToken * balance0) / totalSupply;
+        emit BurnValue(liquidityToken, balance0, totalSupply);
+        amount1 = (liquidityToken * balance1) / totalSupply;
+        emit BurnValue(liquidityToken, balance1, totalSupply);
 
         if (amount0 == 0 || amount1 == 0) {
             revert InsufficientLiquidityBurned();
         }
         // 销毁用户转入合约中的所有流动性代币
-        _burn(address(this), liquidity);
+        _burn(address(this), liquidityToken);
 
+        // 将质押的代币退回
         _safeTransfer(token0, to, amount0);
         _safeTransfer(token1, to, amount1);
 
@@ -152,6 +156,7 @@ contract ZuniswapV2Pair is ERC20, Math {
     }
 
     // token转换
+    // (y - △y)(x + △x) = xy, L不变
     function swap(
         uint256 amount0Out,
         uint256 amount1Out,
@@ -203,6 +208,7 @@ contract ZuniswapV2Pair is ERC20, Math {
          *  balance0 = reserve0 + amount0In - amout0Out
             balance1 = reserve1 + amount1In - amout1Out         
          * =>amountIn = balance - (reserve - amountOut)
+         * =>amountIn - amountOut = balance - reserve
          */
         uint256 amount0In = balance0 > reserve0 - amount0Out
             ? balance0 - (reserve0 - amount0Out)
@@ -263,7 +269,9 @@ contract ZuniswapV2Pair is ERC20, Math {
         // price1Cumulative = reserve0 / reserve1 * timeElapsed = 10/40000*5 = 0.00125 WETH
         unchecked {
             uint32 timeElapsed = uint32(block.timestamp) - blockTimestampLast;
-
+            // Pn：0 - n秒的累积价格, Pk：0 - k 秒的累积价格
+            // uniswapv2中并没有做时间区间记录，要计算某一段时间内的平均价格需自己去记录时间(tn - tk)
+            //TWRP计算公式： Pn - Pk / tn - tk
             //更新Uniswap池的价格累积器（price accumulators）
             if (timeElapsed > 0 && reserve0_ > 0 && reserve1_ > 0) {
                 price0CumulativeLast +=
